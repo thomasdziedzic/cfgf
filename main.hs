@@ -89,8 +89,6 @@ main = do
     let latestVersions = map (H.versionBranch . fst . M.findMax) hackageMappings
     let latestPackageDescriptions = map (PD.packageDescription . snd . M.findMax) hackageMappings
 
-    putStrLn $ show latestVersions
-
     -- if there is a new version, bump version and reset pkgrel otherwise keep version and bump pkgrel
     let latestPkgs = bump pkgs latestVersions
 
@@ -101,14 +99,10 @@ main = do
     let pkgEdges = concatMap (getPkgVertices pkgNameToVertex) pkgs
     -- pkgDepends is the order in which we should build our packages
     let pkgDepends = G.topSort $ G.transposeG $ G.buildG bounds pkgEdges
-    putStrLn $ show pkgDepends
     let pkgNames = map (archlinuxName . (pkgs !!)) pkgDepends
     let inorderPkgDescs = map (latestPkgs !!) pkgDepends
-    putStrLn $ show pkgNames
 
     -- build dependency graph in post order traversal
-    putStrLn $ show latestPkgs
-    -- need a map from archlinuxName to PkgDesc so that we can map a build function to 
     let archlinuxNameToPkgDesc = M.fromList $ map (\x -> (archlinuxName x, x)) latestPkgs
 
     D.createDirectory "./tmp"
