@@ -114,7 +114,6 @@ main = do
 
     D.setCurrentDirectory ".."
 
--- TODO implement this
 buildPkg :: [PkgDesc] -> (PkgDesc, PD.PackageDescription) -> IO ()
 buildPkg latestPkgs desc@(pkgDesc, hkgPkgDesc) = do
     let archName = archlinuxName pkgDesc
