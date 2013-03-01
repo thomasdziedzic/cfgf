@@ -16,7 +16,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Data.Text.Template as TL
 import qualified Data.Text.Lazy as L
-import Data.List (intercalate)
+import Data.List (intercalate, find)
 import System.Process (readProcessWithExitCode)
 import Data.Maybe
 
@@ -255,35 +255,18 @@ setupChroots latestPkgs (pkgDesc, hkgPkgDesc) = do
 
     D.setCurrentDirectory cwd
   where
-    pkgnameToPkgDesc = M.fromList [(archlinuxName p, p) | p <- latestPkgs]
-
     bounds = (0, length pkgs - 1)
     pkgNames = map archlinuxName pkgs
     pkgNameToVertex = M.fromList $ zip pkgNames [0..]
     pkgEdges = concatMap (getPkgVertices pkgNameToVertex) pkgs
-    pkgDepends = G.topSort $ G.transposeG $ G.buildG bounds pkgEdges
+    dependencyGraph = G.buildG bounds pkgEdges
+    pkgDepends = G.topSort $ G.transposeG dependencyGraph
 
-    pkgNames2 = map (archlinuxName . (pkgs !!)) pkgDepends
-
-    depsInOrder = filter (flip S.member depsSet) pkgNames2
-
-    archlinuxNameToPkgDesc = M.fromList $ map (\x -> (archlinuxName x, x)) latestPkgs
-
-    inorderPkgDescs = map (archlinuxNameToPkgDesc M.!) depsInOrder
-
-    -- retrieve deps recursively
-    deps = S.toList . S.fromList $ deps' $ depends pkgDesc
-    deps' :: [String] -> [String]
-    deps' [] = []
-    deps' xs = validPkgNames ++ (deps' dependsOfXs)
-       where
-           validPkgNames :: [String]
-           validPkgNames = filter (flip M.member pkgnameToPkgDesc) xs
-           xsPkgDescs = mapMaybe (flip M.lookup pkgnameToPkgDesc) xs
-           dependsOfXs :: [String]
-           dependsOfXs = concatMap depends xsPkgDescs
-    --rebuiltDeps = mapMaybe (flip M.lookup pkgnameToPkgDesc) deps
-    depsSet = S.fromList deps
+    currentPkgIndex = fst . fromJust $ find ((archlinuxName pkgDesc ==) .  archlinuxName . snd) $ zip [0..] latestPkgs
+    vertexDepends = S.fromList $ G.reachable dependencyGraph currentPkgIndex
+    inorderVertexDepends = filter (flip S.member vertexDepends) pkgDepends
+    inorderVertexDepends' = filter (currentPkgIndex /=) inorderVertexDepends
+    inorderPkgDescs = map (latestPkgs !!) inorderVertexDepends'
 
 installPkg :: PkgDesc -> Bool -> IO ()
 installPkg latestPkg clean= do
