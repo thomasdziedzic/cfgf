@@ -1,0 +1,7 @@
+*.hs
+*.hi
+*.o
+*.swp
+
+main
+tmp
