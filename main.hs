@@ -55,6 +55,9 @@ repo = "testing"
 chroots :: String
 chroots = "/var/lib/archbuild"
 
+archs :: [String]
+archs = ["i686", "x86_64"]
+
 bump :: [PkgDesc] -> [PkgVer] -> [PkgDesc]
 bump [] [] = []
 bump (p:ps) (v:vs) =
@@ -195,49 +198,30 @@ fetchVersionedDepends deps latestPkgs
 
 updateChroots :: IO ()
 updateChroots = do
-    putStrLn "updating chroots"
-
-    let arch = "i686"
-    exitCode <- rawSystem "sudo" [
-          "setarch", arch
-        , "mkarchroot", "-u"
-        , "-C", "/usr/share/devtools/pacman-" ++ repo ++ ".conf"
-        , "-M", "/usr/share/devtools/makepkg-" ++ arch ++ ".conf"
-        , chroots ++ "/" ++ repo ++ "-" ++ arch ++ "/root"
-        ]
-    case exitCode of
-        ExitSuccess -> return ()
-        (ExitFailure code) -> exitFailure
-
-    let arch = "x86_64"
-    exitCode <- rawSystem "sudo" [
-          "setarch", arch
-        , "mkarchroot", "-u"
-        , "-C", "/usr/share/devtools/pacman-" ++ repo ++ ".conf"
-        , "-M", "/usr/share/devtools/makepkg-" ++ arch ++ ".conf"
-        , chroots ++ "/" ++ repo ++ "-" ++ arch ++ "/root"
-        ]
-    case exitCode of
-        ExitSuccess -> return ()
-        (ExitFailure code) -> exitFailure
+    mapM_ updateChroots' archs
+  where
+    updateChroots' arch = do
+        exitCode <- rawSystem "sudo" [
+              "setarch", arch
+            , "mkarchroot", "-u"
+            , "-C", "/usr/share/devtools/pacman-" ++ repo ++ ".conf"
+            , "-M", "/usr/share/devtools/makepkg-" ++ arch ++ ".conf"
+            , chroots ++ "/" ++ repo ++ "-" ++ arch ++ "/root"
+            ]
+        case exitCode of
+            ExitSuccess -> return ()
+            (ExitFailure code) -> exitFailure
 
 buildChroots :: (PkgDesc, PD.PackageDescription) -> IO ()
 buildChroots (pkgDesc, hkgPkgDesc) = do
-    putStrLn "building in chroots"
-
-    let arch = "i686"
-    exitCode <- system $ "sudo setarch " ++ arch ++ " makechrootpkg " ++ cleanFlag ++ " -r " ++ chroots ++ "/" ++ repo ++ "-" ++ arch
-    case exitCode of
-        ExitSuccess -> return ()
-        (ExitFailure code) -> exitFailure
-
-    let arch = "x86_64"
-    exitCode <- system $ "sudo setarch " ++ arch ++ " makechrootpkg " ++ cleanFlag ++ " -r " ++ chroots ++ "/" ++ repo ++ "-" ++ arch
-    case exitCode of
-        ExitSuccess -> return ()
-        (ExitFailure code) -> exitFailure
+    mapM_ buildChroots' archs
   where
     cleanFlag = if (length . depends) pkgDesc == 0 then "-c" else ""
+    buildChroots' arch = do
+        exitCode <- system $ "sudo setarch " ++ arch ++ " makechrootpkg " ++ cleanFlag ++ " -r " ++ chroots ++ "/" ++ repo ++ "-" ++ arch
+        case exitCode of
+            ExitSuccess -> return ()
+            (ExitFailure code) -> exitFailure
 
 setupChroots :: [PkgDesc] -> (PkgDesc, PD.PackageDescription) -> IO ()
 setupChroots latestPkgs (pkgDesc, hkgPkgDesc) = do
@@ -269,22 +253,17 @@ setupChroots latestPkgs (pkgDesc, hkgPkgDesc) = do
 
 installPkg :: PkgDesc -> Bool -> IO ()
 installPkg latestPkg clean= do
-    let arch = "i686"
-    exitCode <- system $ "sudo setarch " ++ arch ++ " makechrootpkg " ++ cleanFlag ++ " -r " ++ chroots ++ "/" ++ repo ++ "-" ++ arch ++ " -I " ++ pkgname ++ "/trunk/" ++ pkgname ++ "-" ++ pkgver ++ "-" ++ pkgrel ++ "-" ++ arch ++ ".pkg.tar.xz"
-    case exitCode of
-        ExitSuccess -> return ()
-        (ExitFailure code) -> exitFailure
-
-    let arch = "x86_64"
-    exitCode <- system $ "sudo setarch " ++ arch ++ " makechrootpkg " ++ cleanFlag ++ " -r " ++ chroots ++ "/" ++ repo ++ "-" ++ arch ++ " -I " ++ pkgname ++ "/trunk/" ++ pkgname ++ "-" ++ pkgver ++ "-" ++ pkgrel ++ "-" ++ arch ++ ".pkg.tar.xz"
-    case exitCode of
-        ExitSuccess -> return ()
-        (ExitFailure code) -> exitFailure
+    mapM_ installPkg' archs
   where
     pkgname = archlinuxName latestPkg
     pkgver = intercalate "." $ map show $ pkgVer latestPkg
     pkgrel = show . pkgRel $ latestPkg
     cleanFlag = if clean then "-c" else ""
+    installPkg' arch =  do
+        exitCode <- system $ "sudo setarch " ++ arch ++ " makechrootpkg " ++ cleanFlag ++ " -r " ++ chroots ++ "/" ++ repo ++ "-" ++ arch ++ " -I " ++ pkgname ++ "/trunk/" ++ pkgname ++ "-" ++ pkgver ++ "-" ++ pkgrel ++ "-" ++ arch ++ ".pkg.tar.xz"
+        case exitCode of
+            ExitSuccess -> return ()
+            (ExitFailure code) -> exitFailure
 
 contextFromList :: [(T.Text, T.Text)] -> TL.Context
 contextFromList assocs x = maybe err id . lookup x $ assocs
