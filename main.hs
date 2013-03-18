@@ -63,14 +63,14 @@ bump [] [] = []
 bump (p:ps) (v:vs) =
     case compare (pkgVer p) v of
         LT -> p {pkgVer=v, pkgRel=1} : bump ps vs
-        EQ -> p {pkgRel=((pkgRel p) + 1)} : bump ps vs
+        EQ -> p {pkgRel=pkgRel p + 1} : bump ps vs
         GT -> error $ "the latest version is less than the current package version, old version: " ++ show (pkgVer p) ++ " new version: " ++ show v
 bump _ _ = error "the lists don't have the same length"
 
 getPkgVertices :: M.Map String Int -> PkgDesc -> [(Int,Int)]
 getPkgVertices vertexMap pkgDesc = zip (repeat currentPkgVertex) dependVertices
   where
-    currentPkgVertex = vertexMap M.! (archlinuxName pkgDesc)
+    currentPkgVertex = vertexMap M.! archlinuxName pkgDesc
     dependVertices = buildDependVertices $ depends pkgDesc
     buildDependVertices [] = []
     buildDependVertices (x:xs) = case M.lookup x vertexMap of
@@ -193,12 +193,11 @@ fetchVersionedDepends deps latestPkgs
     | otherwise = "'" ++ pkgdeps ++ "'"
   where
     archlinuxNames = S.fromList $ map archlinuxName latestPkgs
-    pkgnameToPkgver = M.fromList [(archlinuxName p, archlinuxName p ++ "=" ++ (intercalate "." $ map show $ pkgVer p) ++ "-" ++ (show $ pkgRel p)) | p <- latestPkgs, (archlinuxName p) `S.member` archlinuxNames]
-    pkgdeps = intercalate "' '" $ map (\x -> maybe x id (M.lookup x pkgnameToPkgver)) deps
+    pkgnameToPkgver = M.fromList [(archlinuxName p, archlinuxName p ++ "=" ++ intercalate "." (map show $ pkgVer p) ++ "-" ++ show (pkgRel p)) | p <- latestPkgs, archlinuxName p `S.member` archlinuxNames]
+    pkgdeps = intercalate "' '" $ map (\x -> fromMaybe x (M.lookup x pkgnameToPkgver)) deps
 
 updateChroots :: IO ()
-updateChroots = do
-    mapM_ updateChroots' archs
+updateChroots = mapM_ updateChroots' archs
   where
     updateChroots' arch = do
         exitCode <- rawSystem "sudo" [
@@ -213,10 +212,9 @@ updateChroots = do
             (ExitFailure code) -> exitFailure
 
 buildChroots :: (PkgDesc, PD.PackageDescription) -> IO ()
-buildChroots (pkgDesc, hkgPkgDesc) = do
-    mapM_ buildChroots' archs
+buildChroots (pkgDesc, hkgPkgDesc) = mapM_ buildChroots' archs
   where
-    cleanFlag = if (length . depends) pkgDesc == 0 then "-c" else ""
+    cleanFlag = if null (depends pkgDesc) then "-c" else ""
     buildChroots' arch = do
         exitCode <- system $ "sudo setarch " ++ arch ++ " makechrootpkg " ++ cleanFlag ++ " -r " ++ chroots ++ "/" ++ repo ++ "-" ++ arch
         case exitCode of
@@ -234,7 +232,7 @@ setupChroots latestPkgs (pkgDesc, hkgPkgDesc) = do
         [x] -> installPkg x True
         x:xs -> do
             installPkg x True
-            mapM_ (flip installPkg False) xs
+            mapM_ (`installPkg` False) xs
 
     D.setCurrentDirectory cwd
   where
@@ -247,13 +245,12 @@ setupChroots latestPkgs (pkgDesc, hkgPkgDesc) = do
 
     currentPkgIndex = fst . fromJust $ find ((archlinuxName pkgDesc ==) .  archlinuxName . snd) $ zip [0..] latestPkgs
     vertexDepends = S.fromList $ G.reachable dependencyGraph currentPkgIndex
-    inorderVertexDepends = filter (flip S.member vertexDepends) pkgDepends
+    inorderVertexDepends = filter (`S.member` vertexDepends) pkgDepends
     inorderVertexDepends' = filter (currentPkgIndex /=) inorderVertexDepends
     inorderPkgDescs = map (latestPkgs !!) inorderVertexDepends'
 
 installPkg :: PkgDesc -> Bool -> IO ()
-installPkg latestPkg clean= do
-    mapM_ installPkg' archs
+installPkg latestPkg clean= mapM_ installPkg' archs
   where
     pkgname = archlinuxName latestPkg
     pkgver = intercalate "." $ map show $ pkgVer latestPkg
@@ -266,6 +263,6 @@ installPkg latestPkg clean= do
             (ExitFailure code) -> exitFailure
 
 contextFromList :: [(T.Text, T.Text)] -> TL.Context
-contextFromList assocs x = maybe err id . lookup x $ assocs
+contextFromList assocs x = fromMaybe err . lookup x $ assocs
   where
     err = error $ "Could not find key: " ++ T.unpack x
