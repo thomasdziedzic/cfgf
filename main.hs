@@ -102,8 +102,9 @@ main = do
     let pkgEdges = concatMap (getPkgVertices pkgNameToVertex) pkgs
     -- pkgDepends is the order in which we should build our packages
     let pkgDepends = G.topSort $ G.transposeG $ G.buildG bounds pkgEdges
-    let pkgNames = map (archlinuxName . (pkgs !!)) pkgDepends
+    --let pkgNames = map (archlinuxName . (pkgs !!)) pkgDepends
     let inorderPkgDescs = map (latestPkgs !!) pkgDepends
+    let inorderHkgDescs = map (latestPackageDescriptions !!) pkgDepends
 
     -- build dependency graph in post order traversal
     let archlinuxNameToPkgDesc = M.fromList $ map (\x -> (archlinuxName x, x)) latestPkgs
@@ -113,7 +114,9 @@ main = do
 
     updateChroots
 
-    mapM_ (buildPkg latestPkgs) $ zip inorderPkgDescs latestPackageDescriptions
+    putStrLn $ show $ zip inorderPkgDescs inorderHkgDescs
+
+    mapM_ (buildPkg latestPkgs) $ zip inorderPkgDescs inorderHkgDescs
 
     D.setCurrentDirectory ".."
 
