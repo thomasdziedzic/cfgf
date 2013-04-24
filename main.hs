@@ -212,10 +212,14 @@ updateChroots = mapM_ updateChroots' archs
             (ExitFailure code) -> exitFailure
 
 buildChroots :: (PkgDesc, PD.PackageDescription) -> IO ()
-buildChroots (pkgDesc, hkgPkgDesc) = mapM_ buildChroots' archs
+buildChroots (pkgDesc, hkgPkgDesc) = do
+    putStrLn "building in chroots"
+
+    mapM_ buildChroots' archs
   where
     cleanFlag = if null (depends pkgDesc) then "-c" else ""
     buildChroots' arch = do
+        putStrLn $ "sudo setarch " ++ arch ++ " makechrootpkg " ++ cleanFlag ++ " -r " ++ chroots ++ "/" ++ repo ++ "-" ++ arch
         exitCode <- system $ "sudo setarch " ++ arch ++ " makechrootpkg " ++ cleanFlag ++ " -r " ++ chroots ++ "/" ++ repo ++ "-" ++ arch
         case exitCode of
             ExitSuccess -> return ()
@@ -223,6 +227,8 @@ buildChroots (pkgDesc, hkgPkgDesc) = mapM_ buildChroots' archs
 
 setupChroots :: [PkgDesc] -> (PkgDesc, PD.PackageDescription) -> IO ()
 setupChroots latestPkgs (pkgDesc, hkgPkgDesc) = do
+    putStrLn "setting up chroots"
+
     cwd <- D.getCurrentDirectory
 
     D.setCurrentDirectory "../.."
