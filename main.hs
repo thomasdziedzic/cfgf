@@ -98,7 +98,6 @@ main = do
 buildPkg :: [PkgDesc] -> (PkgDesc, PD.PackageDescription) -> IO ()
 buildPkg latestPkgs desc@(pkgDesc, hkgPkgDesc) = do
     let archName = archlinuxName pkgDesc
-    let deps = depends pkgDesc
 
     archcoExitCode <- rawSystem "archco" [archName]
     if archcoExitCode == ExitSuccess
