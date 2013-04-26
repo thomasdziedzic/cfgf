@@ -3,5 +3,6 @@
 *.swp
 
 main
+tests
 tmp
 .lock

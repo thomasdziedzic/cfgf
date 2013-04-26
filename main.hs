@@ -1,8 +1,10 @@
 module Main
-  ( PkgDesc(..)
-  , main
+  ( main
   )
 where
+
+import Package.Types
+import Package.Library
 
 import System.Exit
 import System.Cmd
@@ -19,20 +21,6 @@ import qualified Data.Text.Lazy as L
 import Data.List (intercalate, find)
 import System.Process (readProcessWithExitCode)
 import Data.Maybe
-
-type ArchlinuxName = String
-type HackageName = String
-type PkgVer = [Int]
-type PkgRel = Int
-type Depends = [String]
-
-data PkgDesc = PkgDesc
-    { archlinuxName :: ArchlinuxName
-    , hackageName :: HackageName
-    , pkgVer :: PkgVer
-    , pkgRel :: PkgRel
-    , depends :: Depends
-    } deriving (Show,Read)
 
 -- leave out cabal-install for now since it is a statically linked binary which doesn't depend on haskell libs or a specific ghc version, also doesn't need an install file
 -- PkgDesc "cabal-install" "cabal-install" [1,16,0,2] 2
@@ -67,16 +55,6 @@ bump (p:ps) (v:vs) =
         GT -> error $ "the latest version is less than the current package version, old version: " ++ show (pkgVer p) ++ " new version: " ++ show v
 bump _ _ = error "the lists don't have the same length"
 
-getPkgVertices :: M.Map String Int -> PkgDesc -> [(Int,Int)]
-getPkgVertices vertexMap pkgDesc = zip (repeat currentPkgVertex) dependVertices
-  where
-    currentPkgVertex = vertexMap M.! archlinuxName pkgDesc
-    dependVertices = buildDependVertices $ depends pkgDesc
-    buildDependVertices [] = []
-    buildDependVertices (x:xs) = case M.lookup x vertexMap of
-        Nothing -> buildDependVertices xs
-        Just a -> a : buildDependVertices xs
-
 main :: IO ()
 main = do
     -- update the hackage database
@@ -102,7 +80,6 @@ main = do
     let pkgEdges = concatMap (getPkgVertices pkgNameToVertex) pkgs
     -- pkgDepends is the order in which we should build our packages
     let pkgDepends = G.topSort $ G.transposeG $ G.buildG bounds pkgEdges
-    --let pkgNames = map (archlinuxName . (pkgs !!)) pkgDepends
     let inorderPkgDescs = map (latestPkgs !!) pkgDepends
     let inorderHkgDescs = map (latestPackageDescriptions !!) pkgDepends
 
@@ -111,8 +88,6 @@ main = do
 
     D.createDirectory "./tmp"
     D.setCurrentDirectory "./tmp"
-
-    updateChroots
 
     putStrLn $ show $ zip inorderPkgDescs inorderHkgDescs
 
@@ -136,9 +111,9 @@ buildPkg latestPkgs desc@(pkgDesc, hkgPkgDesc) = do
 
     generatePkgbuild desc latestPkgs
 
-    setupChroots latestPkgs pkgDesc
+    putStrLn "building in chroots"
 
-    buildChroots pkgDesc
+    buildChroots pkgDesc latestPkgs
 
     D.setCurrentDirectory "../.."
 
@@ -199,74 +174,14 @@ fetchVersionedDepends deps latestPkgs
     pkgnameToPkgver = M.fromList [(archlinuxName p, archlinuxName p ++ "=" ++ intercalate "." (map show $ pkgVer p) ++ "-" ++ show (pkgRel p)) | p <- latestPkgs, archlinuxName p `S.member` archlinuxNames]
     pkgdeps = intercalate "' '" $ map (\x -> fromMaybe x (M.lookup x pkgnameToPkgver)) deps
 
-updateChroots :: IO ()
-updateChroots = mapM_ updateChroots' archs
-  where
-    updateChroots' arch = do
-        exitCode <- rawSystem "sudo" [
-              "setarch", arch
-            , "mkarchroot", "-u"
-            , "-C", "/usr/share/devtools/pacman-" ++ repo ++ ".conf"
-            , "-M", "/usr/share/devtools/makepkg-" ++ arch ++ ".conf"
-            , chroots ++ "/" ++ repo ++ "-" ++ arch ++ "/root"
-            ]
-        case exitCode of
-            ExitSuccess -> return ()
-            (ExitFailure code) -> exitFailure
-
-buildChroots :: PkgDesc -> IO ()
-buildChroots pkgDesc = do
-    putStrLn "building in chroots"
-
+buildChroots :: PkgDesc -> [PkgDesc] -> IO ()
+buildChroots pkgDesc latestPkgs = do
     mapM_ buildChroots' archs
   where
     cleanFlag = if null (depends pkgDesc) then "-c" else ""
     buildChroots' arch = do
-        putStrLn $ "sudo setarch " ++ arch ++ " makechrootpkg " ++ cleanFlag ++ " -r " ++ chroots ++ "/" ++ repo ++ "-" ++ arch
-        exitCode <- system $ "sudo setarch " ++ arch ++ " makechrootpkg " ++ cleanFlag ++ " -r " ++ chroots ++ "/" ++ repo ++ "-" ++ arch
-        case exitCode of
-            ExitSuccess -> return ()
-            (ExitFailure code) -> exitFailure
-
-setupChroots :: [PkgDesc] -> PkgDesc -> IO ()
-setupChroots latestPkgs pkgDesc = do
-    putStrLn "setting up chroots"
-
-    cwd <- D.getCurrentDirectory
-
-    D.setCurrentDirectory "../.."
-
-    case inorderPkgDescs of
-        [] -> return ()
-        [x] -> installPkg x True
-        x:xs -> do
-            installPkg x True
-            mapM_ (`installPkg` False) xs
-
-    D.setCurrentDirectory cwd
-  where
-    bounds = (0, length pkgs - 1)
-    pkgNames = map archlinuxName pkgs
-    pkgNameToVertex = M.fromList $ zip pkgNames [0..]
-    pkgEdges = concatMap (getPkgVertices pkgNameToVertex) pkgs
-    dependencyGraph = G.buildG bounds pkgEdges
-    pkgDepends = G.topSort $ G.transposeG dependencyGraph
-
-    currentPkgIndex = fst . fromJust $ find ((archlinuxName pkgDesc ==) .  archlinuxName . snd) $ zip [0..] latestPkgs
-    vertexDepends = S.fromList $ G.reachable dependencyGraph currentPkgIndex
-    inorderVertexDepends = filter (`S.member` vertexDepends) pkgDepends
-    inorderVertexDepends' = filter (currentPkgIndex /=) inorderVertexDepends
-    inorderPkgDescs = map (latestPkgs !!) inorderVertexDepends'
-
-installPkg :: PkgDesc -> Bool -> IO ()
-installPkg latestPkg clean= mapM_ installPkg' archs
-  where
-    pkgname = archlinuxName latestPkg
-    pkgver = intercalate "." $ map show $ pkgVer latestPkg
-    pkgrel = show . pkgRel $ latestPkg
-    cleanFlag = if clean then "-c" else ""
-    installPkg' arch =  do
-        exitCode <- system $ "sudo setarch " ++ arch ++ " makechrootpkg " ++ cleanFlag ++ " -r " ++ chroots ++ "/" ++ repo ++ "-" ++ arch ++ " -I " ++ pkgname ++ "/trunk/" ++ pkgname ++ "-" ++ pkgver ++ "-" ++ pkgrel ++ "-" ++ arch ++ ".pkg.tar.xz"
+        putStrLn $ "sudo " ++ repo ++ "-" ++ arch ++ "-build" ++ (getDependencyString latestPkgs pkgDesc arch)
+        exitCode <- system $ "sudo " ++ repo ++ "-" ++ arch ++ "-build" ++ (getDependencyString latestPkgs pkgDesc arch)
         case exitCode of
             ExitSuccess -> return ()
             (ExitFailure code) -> exitFailure
