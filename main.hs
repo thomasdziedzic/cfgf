@@ -132,18 +132,18 @@ buildPkg latestPkgs desc@(pkgDesc, hkgPkgDesc) = do
 
     D.setCurrentDirectory (archName ++ "/trunk")
 
-    generateInstall desc
+    generateInstall pkgDesc
 
     generatePkgbuild desc latestPkgs
 
-    setupChroots latestPkgs desc
+    setupChroots latestPkgs pkgDesc
 
-    buildChroots desc
+    buildChroots pkgDesc
 
     D.setCurrentDirectory "../.."
 
-generateInstall :: (PkgDesc, PD.PackageDescription) -> IO ()
-generateInstall (pkgDesc, hkgPkgDesc) = do
+generateInstall :: PkgDesc -> IO ()
+generateInstall pkgDesc = do
     installContent <- TIO.readFile "../../../templates/install.template"
 
     let installTemplate = TL.template installContent
@@ -214,8 +214,8 @@ updateChroots = mapM_ updateChroots' archs
             ExitSuccess -> return ()
             (ExitFailure code) -> exitFailure
 
-buildChroots :: (PkgDesc, PD.PackageDescription) -> IO ()
-buildChroots (pkgDesc, hkgPkgDesc) = do
+buildChroots :: PkgDesc -> IO ()
+buildChroots pkgDesc = do
     putStrLn "building in chroots"
 
     mapM_ buildChroots' archs
@@ -228,8 +228,8 @@ buildChroots (pkgDesc, hkgPkgDesc) = do
             ExitSuccess -> return ()
             (ExitFailure code) -> exitFailure
 
-setupChroots :: [PkgDesc] -> (PkgDesc, PD.PackageDescription) -> IO ()
-setupChroots latestPkgs (pkgDesc, hkgPkgDesc) = do
+setupChroots :: [PkgDesc] -> PkgDesc -> IO ()
+setupChroots latestPkgs pkgDesc = do
     putStrLn "setting up chroots"
 
     cwd <- D.getCurrentDirectory
