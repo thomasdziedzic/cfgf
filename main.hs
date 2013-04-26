@@ -40,9 +40,6 @@ pkgs = [ PkgDesc "haskell-http" "HTTP" [4000,2,8] 1 [ghc, "sh", "haskell-network
 repo :: String
 repo = "staging"
 
-chroots :: String
-chroots = "/var/lib/archbuild"
-
 archs :: [String]
 archs = ["i686", "x86_64"]
 
@@ -65,7 +62,7 @@ main = do
 
     -- find the latest version of each package
     hackage <- H.readHackage
-    let getHackageMapping (PkgDesc archlinuxName hackageName oldPkgVer oldPkgDesc depends) = hackage M.! hackageName
+    let getHackageMapping (PkgDesc _ hackageName _ _ _) = hackage M.! hackageName
     let hackageMappings = map getHackageMapping pkgs
     let latestVersions = map (H.versionBranch . fst . M.findMax) hackageMappings
     let latestPackageDescriptions = map (PD.packageDescription . snd . M.findMax) hackageMappings
@@ -83,9 +80,6 @@ main = do
     let inorderPkgDescs = map (latestPkgs !!) pkgDepends
     let inorderHkgDescs = map (latestPackageDescriptions !!) pkgDepends
 
-    -- build dependency graph in post order traversal
-    let archlinuxNameToPkgDesc = M.fromList $ map (\x -> (archlinuxName x, x)) latestPkgs
-
     D.createDirectory "./tmp"
     D.setCurrentDirectory "./tmp"
 
@@ -96,7 +90,7 @@ main = do
     D.setCurrentDirectory ".."
 
 buildPkg :: [PkgDesc] -> (PkgDesc, PD.PackageDescription) -> IO ()
-buildPkg latestPkgs desc@(pkgDesc, hkgPkgDesc) = do
+buildPkg latestPkgs desc@(pkgDesc, _) = do
     let archName = archlinuxName pkgDesc
 
     archcoExitCode <- rawSystem "archco" [archName]
@@ -177,13 +171,12 @@ buildChroots :: PkgDesc -> [PkgDesc] -> IO ()
 buildChroots pkgDesc latestPkgs = do
     mapM_ buildChroots' archs
   where
-    cleanFlag = if null (depends pkgDesc) then "-c" else ""
     buildChroots' arch = do
         putStrLn $ "sudo " ++ repo ++ "-" ++ arch ++ "-build" ++ (getDependencyString latestPkgs pkgDesc arch)
         exitCode <- system $ "sudo " ++ repo ++ "-" ++ arch ++ "-build" ++ (getDependencyString latestPkgs pkgDesc arch)
         case exitCode of
             ExitSuccess -> return ()
-            (ExitFailure code) -> exitFailure
+            (ExitFailure _) -> exitFailure
 
 contextFromList :: [(T.Text, T.Text)] -> TL.Context
 contextFromList assocs x = fromMaybe err . lookup x $ assocs
