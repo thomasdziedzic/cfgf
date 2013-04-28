@@ -22,6 +22,8 @@ import Data.List (intercalate, find)
 import System.Process (readProcessWithExitCode)
 import Data.Maybe
 
+import Paths_cfgf (getDataFileName)
+
 -- leave out cabal-install for now since it is a statically linked binary which doesn't depend on haskell libs or a specific ghc version, also doesn't need an install file
 -- PkgDesc "cabal-install" "cabal-install" [1,16,0,2] 2
 pkgs :: [PkgDesc]
@@ -112,7 +114,8 @@ buildPkg latestPkgs desc@(pkgDesc, _) = do
 
 generateInstall :: PkgDesc -> IO ()
 generateInstall pkgDesc = do
-    installContent <- TIO.readFile "../../../templates/install.template"
+    installTemplatePath <- getDataFileName "templates/install.template"
+    installContent <- TIO.readFile installTemplatePath
 
     let installTemplate = TL.template installContent
     let filledTemplate = TL.render installTemplate ctx
@@ -126,7 +129,8 @@ generateInstall pkgDesc = do
 
 generatePkgbuild :: (PkgDesc, PD.PackageDescription) -> [PkgDesc] -> IO ()
 generatePkgbuild (pkgDesc, hkgPkgDesc) latestPkgs = do
-    pkgbuildContent <- TIO.readFile "../../../templates/PKGBUILD.template"
+    pkgbuildTemplatePath <- getDataFileName "templates/PKGBUILD.template"
+    pkgbuildContent <- TIO.readFile pkgbuildTemplatePath
 
     let pkgbuildTemplate = TL.template pkgbuildContent
     let filledTemplate = TL.render pkgbuildTemplate (ctx "")

@@ -3,10 +3,15 @@ version: 0.1
 synopsis: Automated Haskell Packager for Archlinux
 author: Thomas Dziedzic
 license: MIT
+license-file: LICENSE
 build-type: Simple
 cabal-version: >= 1.2
 homepage: https://github.com/gostrc/cfgf
 bug-reports: https://github.com/gostrc/cfgf/issues
+
+data-files:
+  templates/install.template
+  templates/PKGBUILD.template
 
 test-suite cfgf-tests
   ghc-options: -Wall

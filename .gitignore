@@ -2,6 +2,7 @@
 *.o
 *.swp
 
+dist
 main
 tests
 tmp
