@@ -16,7 +16,7 @@ testPkgs =
 
 getDependencyStringTest0 = TestCase $ assertEqual
     "the dependency string should contain the transformers package"
-    "-- -I ../../haskell-transformers/trunk/haskell-transformers-0.3.0.0-4-x86_64.pkg.tar.xz"
+    " -- -I ../../haskell-transformers/trunk/haskell-transformers-0.3.0.0-4-x86_64.pkg.tar.xz"
     (getDependencyString testPkgs pkgMtl testArch)
 
 getDependencyStringTest1 = TestCase $ assertEqual
