@@ -13,6 +13,7 @@ import qualified Data.Map as M
 import qualified System.Directory as D
 import qualified Distribution.PackageDescription as PD
 import qualified Data.Text as T
+import qualified Data.Text.Lazy as L
 import qualified Data.Text.IO as TIO
 import qualified Data.Text.Template as TL
 import qualified Data.Text.Lazy.IO as LIO
@@ -109,8 +110,8 @@ generateInstall pkgDesc = do
 
 generatePkgbuild :: (PkgDesc, PD.PackageDescription) -> [PkgDesc] -> IO ()
 generatePkgbuild (pkgDesc, hkgPkgDesc) latestPkgs = do
-    pkgbuildTemplatePath <- getDataFileName "templates/PKGBUILD.template"
-    pkgbuildContent <- TIO.readFile pkgbuildTemplatePath
+    --pkgbuildTemplatePath <- getDataFileName "templates/PKGBUILD.template"
+    pkgbuildContent <- TIO.readFile <=< getDataFileName "templates/PKGBUILD.template"
 
     let pkgbuildTemplate = TL.template pkgbuildContent
     let filledTemplate = TL.render pkgbuildTemplate (ctx "")
@@ -139,6 +140,9 @@ generatePkgbuild (pkgDesc, hkgPkgDesc) latestPkgs = do
         , (T.pack "depends", T.pack pkgdepends)
         , (T.pack "md5sums", T.pack md5sums)
         ]
+
+--generatePkgbuild2 :: (PkgDesc, PD.PackageDescription) -> [PkgDesc] -> L.Text
+--generatePkgbuild2 (pkgDesc, hkgPkgDesc) latestPkgs =
 
 buildChroots :: PkgDesc -> [PkgDesc] -> IO ()
 buildChroots pkgDesc latestPkgs = do
