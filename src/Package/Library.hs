@@ -1,7 +1,9 @@
 module Package.Library
     ( getDependencyString
+    , getPackageString
     , getPkgVertices
     , bump
+    , bumpPackage
     ) where
 
 import Package.Types
@@ -50,10 +52,16 @@ getPkgVertices vertexMap pkgDesc = zip (repeat currentPkgVertex) dependVertices
         Just a -> a : buildDependVertices xs
 
 bump :: [PkgDesc] -> [PkgVer] -> [PkgDesc]
-bump [] [] = []
-bump (p:ps) (v:vs) =
-    case compare (pkgVer p) v of
-        LT -> p {pkgVer=v, pkgRel=1} : bump ps vs
-        EQ -> p {pkgRel=pkgRel p + 1} : bump ps vs
-        GT -> error $ "the latest version is less than the current package version, old version: " ++ show (pkgVer p) ++ " new version: " ++ show v
-bump _ _ = error "the lists don't have the same length"
+bump = zipWith bumpPackage
+
+bumpPackage :: PkgDesc -> PkgVer -> PkgDesc
+bumpPackage package hackageVersion =
+    case compare (pkgVer package) hackageVersion of
+        LT -> package {pkgVer=hackageVersion, pkgRel=1}
+        EQ -> package {pkgRel=bumpedPackageRelease}
+        GT -> error $ packageName ++ "  has a newer version in the arch repos, arch repo version: " ++ repoVersionString ++ " hackage version: " ++ hackageVersionString
+  where
+    packageName = archlinuxName package
+    bumpedPackageRelease = pkgRel package + 1
+    repoVersionString = show $ pkgVer package
+    hackageVersionString = show hackageVersion

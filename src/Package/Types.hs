@@ -19,5 +19,5 @@ data PkgDesc = PkgDesc
     , pkgVer :: PkgVer
     , pkgRel :: PkgRel
     , depends :: Depends
-    } deriving (Show,Read)
+    } deriving (Show,Read,Eq)
 
