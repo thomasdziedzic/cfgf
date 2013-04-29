@@ -13,7 +13,7 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Graph as G
 import Data.List (intercalate, find)
-import Data.Maybe
+import Data.Maybe (fromJust, mapMaybe)
 
 -- used to get the string we need to append to archbuild to install our dependencies
 getDependencyString :: [PkgDesc] -> PkgDesc -> String -> String
@@ -47,10 +47,7 @@ getPkgVertices vertexMap pkgDesc = zip (repeat currentPkgVertex) dependVertices
   where
     currentPkgVertex = vertexMap M.! archlinuxName pkgDesc
     dependVertices = buildDependVertices $ depends pkgDesc
-    buildDependVertices [] = []
-    buildDependVertices (x:xs) = case M.lookup x vertexMap of
-        Nothing -> buildDependVertices xs
-        Just a -> a : buildDependVertices xs
+    buildDependVertices dependencies = mapMaybe (flip M.lookup vertexMap) dependencies
 
 bump :: [PkgDesc] -> [PkgVer] -> [PkgDesc]
 bump = zipWith bumpPackage
