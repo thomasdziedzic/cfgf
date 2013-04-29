@@ -45,15 +45,6 @@ repo = "staging"
 archs :: [String]
 archs = ["i686", "x86_64"]
 
-bump :: [PkgDesc] -> [PkgVer] -> [PkgDesc]
-bump [] [] = []
-bump (p:ps) (v:vs) =
-    case compare (pkgVer p) v of
-        LT -> p {pkgVer=v, pkgRel=1} : bump ps vs
-        EQ -> p {pkgRel=pkgRel p + 1} : bump ps vs
-        GT -> error $ "the latest version is less than the current package version, old version: " ++ show (pkgVer p) ++ " new version: " ++ show v
-bump _ _ = error "the lists don't have the same length"
-
 main :: IO ()
 main = do
     -- update the hackage database

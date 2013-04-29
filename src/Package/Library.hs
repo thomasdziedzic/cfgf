@@ -1,6 +1,7 @@
 module Package.Library
     ( getDependencyString
     , getPkgVertices
+    , bump
     ) where
 
 import Package.Types
@@ -47,3 +48,12 @@ getPkgVertices vertexMap pkgDesc = zip (repeat currentPkgVertex) dependVertices
     buildDependVertices (x:xs) = case M.lookup x vertexMap of
         Nothing -> buildDependVertices xs
         Just a -> a : buildDependVertices xs
+
+bump :: [PkgDesc] -> [PkgVer] -> [PkgDesc]
+bump [] [] = []
+bump (p:ps) (v:vs) =
+    case compare (pkgVer p) v of
+        LT -> p {pkgVer=v, pkgRel=1} : bump ps vs
+        EQ -> p {pkgRel=pkgRel p + 1} : bump ps vs
+        GT -> error $ "the latest version is less than the current package version, old version: " ++ show (pkgVer p) ++ " new version: " ++ show v
+bump _ _ = error "the lists don't have the same length"
