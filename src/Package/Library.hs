@@ -7,6 +7,7 @@ module Package.Library
     , packageVersionString
     , contextFromList
     , fetchVersionedDepends
+    , packageBuildOrder
     ) where
 
 import Package.Types
@@ -84,3 +85,11 @@ fetchVersionedDepends deps latestPkgs
     archlinuxNames = S.fromList $ map archlinuxName latestPkgs
     pkgnameToPkgver = M.fromList [(archlinuxName p, archlinuxName p ++ "=" ++ (packageVersionString $ pkgVer p) ++ "-" ++ show (pkgRel p)) | p <- latestPkgs, archlinuxName p `S.member` archlinuxNames]
     pkgdeps = intercalate "' '" $ map (\x -> fromMaybe x (M.lookup x pkgnameToPkgver)) deps
+
+packageBuildOrder :: [PkgDesc] -> [Int]
+packageBuildOrder packages = G.topSort $ G.transposeG $ G.buildG bounds pkgEdges
+  where
+    bounds = (0, length packages - 1)
+    pkgNames = map archlinuxName packages
+    pkgNameToVertex = M.fromList $ zip pkgNames [0..]
+    pkgEdges = concatMap (getPkgVertices pkgNameToVertex) packages

@@ -101,6 +101,12 @@ fetchVersionedDependsTest_hasDependencies = TestCase $ assertEqual
     "'haskell-transformers=0.3.0.0-4' 'haskell-mtl=2.1.2-3'"
     (fetchVersionedDepends ["haskell-transformers", "haskell-mtl"] testPkgs)
 
+packageBuildOrderTest :: Test
+packageBuildOrderTest = TestCase $ assertEqual
+    "The order should be a topological sort of the dependency graph"
+    [0, 1]
+    (packageBuildOrder testPkgs)
+
 main :: IO Counts
 main = runTestTT $ TestList
     [ getDependencyStringTest_hasDependency
@@ -114,4 +120,5 @@ main = runTestTT $ TestList
     , packageVersionStringTest
     , contextFromListTest
     , fetchVersionedDependsTest_hasDependencies
+    , packageBuildOrderTest
     ]

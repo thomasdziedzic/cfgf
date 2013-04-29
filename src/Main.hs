@@ -10,7 +10,6 @@ import System.Exit
 import System.Cmd
 import qualified Distribution.Hackage.DB as H
 import qualified Data.Map as M
-import qualified Data.Graph as G
 import qualified System.Directory as D
 import qualified Distribution.PackageDescription as PD
 import qualified Data.Text as T
@@ -60,13 +59,9 @@ main = do
     -- if there is a new version, bump version and reset pkgrel otherwise keep version and bump pkgrel
     let latestPkgs = bump pkgs latestVersions
 
-    -- create haskell package dependency graph
-    let bounds = (0, length pkgs - 1)
-    let pkgNames = map archlinuxName pkgs
-    let pkgNameToVertex = M.fromList $ zip pkgNames [0..]
-    let pkgEdges = concatMap (getPkgVertices pkgNameToVertex) pkgs
     -- pkgDepends is the order in which we should build our packages
-    let pkgDepends = G.topSort $ G.transposeG $ G.buildG bounds pkgEdges
+    let pkgDepends = packageBuildOrder pkgs
+
     let inorderPkgDescs = map (latestPkgs !!) pkgDepends
     let inorderHkgDescs = map (latestPackageDescriptions !!) pkgDepends
 
