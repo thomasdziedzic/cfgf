@@ -21,14 +21,14 @@ testPkgs =
     , pkgMtl
     ]
 
-getDependencyStringTest0 :: Test
-getDependencyStringTest0 = TestCase $ assertEqual
+getDependencyStringTest_hasDependency :: Test
+getDependencyStringTest_hasDependency = TestCase $ assertEqual
     "the dependency string should contain the transformers package"
     " -- -I ../../haskell-transformers/trunk/haskell-transformers-0.3.0.0-4-x86_64.pkg.tar.xz"
     (getDependencyString testPkgs pkgMtl testArch)
 
-getDependencyStringTest1 :: Test
-getDependencyStringTest1 = TestCase $ assertEqual
+getDependencyStringTest_noDependency :: Test
+getDependencyStringTest_noDependency = TestCase $ assertEqual
     "the dependency string should not contain any packages"
     ""
     (getDependencyString testPkgs pkgTransformers testArch)
@@ -65,8 +65,8 @@ packageVersionStringTest = TestCase $ assertEqual
 
 main :: IO Counts
 main = runTestTT $ TestList
-    [ getDependencyStringTest0
-    , getDependencyStringTest1
+    [ getDependencyStringTest_hasDependency
+    , getDependencyStringTest_noDependency
     , getPackageStringTest
     , bumpPackageTest_repoContainsOldVersion
     , bumpPackageTest_repoContainsSameVersion
