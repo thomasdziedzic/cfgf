@@ -4,6 +4,7 @@ import Package.Types
 import Package.Library
 
 import qualified Data.Map as M
+import qualified Data.Text as T
 
 ghc :: String
 ghc = "ghc=7.6.3-1"
@@ -75,13 +76,24 @@ bumpPackageTest_repoContainsSameVersion = TestCase $ assertEqual
     pkgMtl {pkgRel=4}
     (bumpPackage pkgMtl [2,1,2])
 
--- TODO find an easy way to test the error condition, or refactor code so we can test it
+-- TODO find an easy way to test the error condition for bumpPackage, or refactor code so we can test it
 
 packageVersionStringTest :: Test
 packageVersionStringTest = TestCase $ assertEqual
     "The package version string should match"
     "2.1.2"
     (packageVersionString $ pkgVer pkgMtl)
+
+contextFromListTest :: Test
+contextFromListTest = TestCase $ assertEqual
+    "The context should match"
+    testValue
+    (contextFromList [(testKey, testValue)] testKey)
+  where
+    testKey = T.pack "key"
+    testValue = T.pack "value"
+
+-- TODO find a way to test error exception for contextFromList
 
 main :: IO Counts
 main = runTestTT $ TestList
@@ -94,4 +106,5 @@ main = runTestTT $ TestList
     , bumpPackageTest_repoContainsOldVersion
     , bumpPackageTest_repoContainsSameVersion
     , packageVersionStringTest
+    , contextFromListTest
     ]

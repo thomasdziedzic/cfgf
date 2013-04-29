@@ -5,6 +5,7 @@ module Package.Library
     , bump
     , bumpPackage
     , packageVersionString
+    , contextFromList
     ) where
 
 import Package.Types
@@ -13,7 +14,9 @@ import qualified Data.Map as M
 import qualified Data.Set as S
 import qualified Data.Graph as G
 import Data.List (intercalate, find)
-import Data.Maybe (fromJust, mapMaybe)
+import Data.Maybe (fromJust, mapMaybe,fromMaybe)
+import qualified Data.Text as T
+import qualified Data.Text.Template as TL
 
 -- used to get the string we need to append to archbuild to install our dependencies
 getDependencyString :: [PkgDesc] -> PkgDesc -> String -> String
@@ -66,3 +69,8 @@ bumpPackage package hackageVersion =
 
 packageVersionString :: PkgVer -> String
 packageVersionString packageVersion = intercalate "." $ map show packageVersion
+
+contextFromList :: [(T.Text, T.Text)] -> TL.Context
+contextFromList assocs x = fromMaybe err . lookup x $ assocs
+  where
+    err = error $ "Could not find key: " ++ T.unpack x

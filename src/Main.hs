@@ -172,8 +172,3 @@ buildChroots pkgDesc latestPkgs = do
         case exitCode of
             ExitSuccess -> return ()
             (ExitFailure _) -> exitFailure
-
-contextFromList :: [(T.Text, T.Text)] -> TL.Context
-contextFromList assocs x = fromMaybe err . lookup x $ assocs
-  where
-    err = error $ "Could not find key: " ++ T.unpack x
