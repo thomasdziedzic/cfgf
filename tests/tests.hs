@@ -33,6 +33,16 @@ getDependencyStringTest1 = TestCase $ assertEqual
     ""
     (getDependencyString testPkgs pkgTransformers testArch)
 
+getPackageStringTest :: Test
+getPackageStringTest = TestCase $ assertEqual
+    "The argument to install the package should match"
+    ("-I ../../" ++ pkgname ++ "/trunk/" ++ pkgname ++ "-" ++ pkgver ++ "-" ++ pkgrel ++ "-" ++ testArch ++ ".pkg.tar.xz")
+    (getPackageString testArch pkgMtl)
+  where
+    pkgname = archlinuxName pkgMtl
+    pkgver = packageVersionString $ pkgVer pkgMtl
+    pkgrel = show $ pkgRel pkgMtl
+
 bumpPackageTest_repoContainsOldVersion :: Test
 bumpPackageTest_repoContainsOldVersion = TestCase $ assertEqual
     "A package with an older should be bumped to the latest version and have a pkgrel set to 1"
@@ -57,7 +67,7 @@ main :: IO Counts
 main = runTestTT $ TestList
     [ getDependencyStringTest0
     , getDependencyStringTest1
-    --, getPackageStringTest
+    , getPackageStringTest
     , bumpPackageTest_repoContainsOldVersion
     , bumpPackageTest_repoContainsSameVersion
     , packageVersionStringTest
