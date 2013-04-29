@@ -37,3 +37,6 @@ executable cfgf
     containers >= 0.5 && < 0.6,
     hackage-db >= 1.5 && < 1.6
 
+source-repository head
+  type: git
+  location: git://github.com/gostrc/cfgf.git
