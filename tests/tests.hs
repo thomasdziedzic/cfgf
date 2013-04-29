@@ -95,6 +95,12 @@ contextFromListTest = TestCase $ assertEqual
 
 -- TODO find a way to test error exception for contextFromList
 
+fetchVersionedDependsTest_hasDependencies :: Test
+fetchVersionedDependsTest_hasDependencies = TestCase $ assertEqual
+    "The depends string should match"
+    "'haskell-transformers=0.3.0.0-4' 'haskell-mtl=2.1.2-3'"
+    (fetchVersionedDepends ["haskell-transformers", "haskell-mtl"] testPkgs)
+
 main :: IO Counts
 main = runTestTT $ TestList
     [ getDependencyStringTest_hasDependency
@@ -107,4 +113,5 @@ main = runTestTT $ TestList
     , bumpPackageTest_repoContainsSameVersion
     , packageVersionStringTest
     , contextFromListTest
+    , fetchVersionedDependsTest_hasDependencies
     ]

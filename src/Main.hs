@@ -10,7 +10,6 @@ import System.Exit
 import System.Cmd
 import qualified Distribution.Hackage.DB as H
 import qualified Data.Map as M
-import qualified Data.Set as S
 import qualified Data.Graph as G
 import qualified System.Directory as D
 import qualified Distribution.PackageDescription as PD
@@ -18,9 +17,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Data.Text.Template as TL
 import qualified Data.Text.Lazy as L
-import Data.List (intercalate)
 import System.Process (readProcessWithExitCode)
-import Data.Maybe
 
 import Paths_cfgf (getDataFileName)
 
@@ -152,15 +149,6 @@ generatePkgbuild (pkgDesc, hkgPkgDesc) latestPkgs = do
         , (T.pack "depends", T.pack pkgdepends)
         , (T.pack "md5sums", T.pack md5sums)
         ]
-
-fetchVersionedDepends :: [String] -> [PkgDesc] -> String
-fetchVersionedDepends deps latestPkgs
-    | null pkgdeps = ""
-    | otherwise = "'" ++ pkgdeps ++ "'"
-  where
-    archlinuxNames = S.fromList $ map archlinuxName latestPkgs
-    pkgnameToPkgver = M.fromList [(archlinuxName p, archlinuxName p ++ "=" ++ (packageVersionString $ pkgVer p) ++ "-" ++ show (pkgRel p)) | p <- latestPkgs, archlinuxName p `S.member` archlinuxNames]
-    pkgdeps = intercalate "' '" $ map (\x -> fromMaybe x (M.lookup x pkgnameToPkgver)) deps
 
 buildChroots :: PkgDesc -> [PkgDesc] -> IO ()
 buildChroots pkgDesc latestPkgs = do

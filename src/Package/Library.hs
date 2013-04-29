@@ -6,6 +6,7 @@ module Package.Library
     , bumpPackage
     , packageVersionString
     , contextFromList
+    , fetchVersionedDepends
     ) where
 
 import Package.Types
@@ -74,3 +75,12 @@ contextFromList :: [(T.Text, T.Text)] -> TL.Context
 contextFromList assocs x = fromMaybe err . lookup x $ assocs
   where
     err = error $ "Could not find key: " ++ T.unpack x
+
+fetchVersionedDepends :: [String] -> [PkgDesc] -> String
+fetchVersionedDepends deps latestPkgs
+    | null pkgdeps = ""
+    | otherwise = "'" ++ pkgdeps ++ "'"
+  where
+    archlinuxNames = S.fromList $ map archlinuxName latestPkgs
+    pkgnameToPkgver = M.fromList [(archlinuxName p, archlinuxName p ++ "=" ++ (packageVersionString $ pkgVer p) ++ "-" ++ show (pkgRel p)) | p <- latestPkgs, archlinuxName p `S.member` archlinuxNames]
+    pkgdeps = intercalate "' '" $ map (\x -> fromMaybe x (M.lookup x pkgnameToPkgver)) deps
