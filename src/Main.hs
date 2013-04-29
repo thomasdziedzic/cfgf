@@ -18,7 +18,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Data.Text.Template as TL
 import qualified Data.Text.Lazy as L
-import Data.List (intercalate, find)
+import Data.List (intercalate)
 import System.Process (readProcessWithExitCode)
 import Data.Maybe
 
@@ -64,7 +64,7 @@ main = do
 
     -- find the latest version of each package
     hackage <- H.readHackage
-    let getHackageMapping (PkgDesc _ hackageName _ _ _) = hackage M.! hackageName
+    let getHackageMapping (PkgDesc _ hkgName _ _ _) = hackage M.! hkgName
     let hackageMappings = map getHackageMapping pkgs
     let latestVersions = map (H.versionBranch . fst . M.findMax) hackageMappings
     let latestPackageDescriptions = map (PD.packageDescription . snd . M.findMax) hackageMappings
@@ -140,10 +140,10 @@ generatePkgbuild (pkgDesc, hkgPkgDesc) latestPkgs = do
 
     (_, md5sums, _) <- readProcessWithExitCode "makepkg" ["-g"] ""
 
-    let filledTemplate = TL.render pkgbuildTemplate (ctx md5sums)
+    let filledTemplatePart2 = TL.render pkgbuildTemplate (ctx md5sums)
 
-    let getOffYourButt = L.toStrict filledTemplate
-    TIO.writeFile "./PKGBUILD" getOffYourButt
+    let getOffYourButtPart2 = L.toStrict filledTemplatePart2
+    TIO.writeFile "./PKGBUILD" getOffYourButtPart2
   where
     pkgname = archlinuxName pkgDesc
     hkgname = hackageName pkgDesc
