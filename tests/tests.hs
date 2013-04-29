@@ -43,7 +43,6 @@ getPackageStringTest = TestCase $ assertEqual
     pkgver = packageVersionString $ pkgVer pkgMtl
     pkgrel = show $ pkgRel pkgMtl
 
-
 bumpTest :: Test
 bumpTest = TestCase $ assertEqual
     "transformers should have been bumped the package version and mtl should have bumped the package release"
