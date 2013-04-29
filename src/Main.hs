@@ -16,7 +16,7 @@ import qualified Distribution.PackageDescription as PD
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Data.Text.Template as TL
-import qualified Data.Text.Lazy as L
+import qualified Data.Text.Lazy.IO as LIO
 import System.Process (readProcessWithExitCode)
 
 import Paths_cfgf (getDataFileName)
@@ -108,8 +108,7 @@ generateInstall pkgDesc = do
     let installTemplate = TL.template installContent
     let filledTemplate = TL.render installTemplate ctx
 
-    let getOffYourButt = L.toStrict filledTemplate
-    TIO.writeFile filename getOffYourButt
+    LIO.writeFile filename filledTemplate
   where
     pkgname = archlinuxName pkgDesc
     filename = "./" ++ pkgname ++ ".install"
@@ -123,15 +122,13 @@ generatePkgbuild (pkgDesc, hkgPkgDesc) latestPkgs = do
     let pkgbuildTemplate = TL.template pkgbuildContent
     let filledTemplate = TL.render pkgbuildTemplate (ctx "")
 
-    let getOffYourButt = L.toStrict filledTemplate
-    TIO.writeFile "./PKGBUILD" getOffYourButt
+    LIO.writeFile "./PKGBUILD" filledTemplate
 
     (_, md5sums, _) <- readProcessWithExitCode "makepkg" ["-g"] ""
 
     let filledTemplatePart2 = TL.render pkgbuildTemplate (ctx md5sums)
 
-    let getOffYourButtPart2 = L.toStrict filledTemplatePart2
-    TIO.writeFile "./PKGBUILD" getOffYourButtPart2
+    LIO.writeFile "./PKGBUILD" filledTemplatePart2
   where
     pkgname = archlinuxName pkgDesc
     hkgname = hackageName pkgDesc
