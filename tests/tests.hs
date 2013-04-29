@@ -47,10 +47,18 @@ bumpPackageTest_repoContainsSameVersion = TestCase $ assertEqual
 
 -- TODO find an easy way to test the error condition, or refactor code so we can test it
 
+packageVersionStringTest :: Test
+packageVersionStringTest = TestCase $ assertEqual
+    "The package version string should match"
+    "2.1.2"
+    (packageVersionString $ pkgVer pkgMtl)
+
 main :: IO Counts
 main = runTestTT $ TestList
     [ getDependencyStringTest0
     , getDependencyStringTest1
+    --, getPackageStringTest
     , bumpPackageTest_repoContainsOldVersion
     , bumpPackageTest_repoContainsSameVersion
+    , packageVersionStringTest
     ]

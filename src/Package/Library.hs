@@ -4,6 +4,7 @@ module Package.Library
     , getPkgVertices
     , bump
     , bumpPackage
+    , packageVersionString
     ) where
 
 import Package.Types
@@ -38,7 +39,7 @@ getPackageString arch latestPkg =
     "-I ../../" ++ pkgname ++ "/trunk/" ++ pkgname ++ "-" ++ pkgver ++ "-" ++ pkgrel ++ "-" ++ arch ++ ".pkg.tar.xz"
   where
     pkgname = archlinuxName latestPkg
-    pkgver = intercalate "." $ map show $ pkgVer latestPkg
+    pkgver = packageVersionString $ pkgVer latestPkg
     pkgrel = show . pkgRel $ latestPkg
 
 getPkgVertices :: M.Map String Int -> PkgDesc -> [(Int,Int)]
@@ -65,3 +66,6 @@ bumpPackage package hackageVersion =
     bumpedPackageRelease = pkgRel package + 1
     repoVersionString = show $ pkgVer package
     hackageVersionString = show hackageVersion
+
+packageVersionString :: PkgVer -> String
+packageVersionString packageVersion = intercalate "." $ map show packageVersion

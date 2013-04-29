@@ -138,7 +138,7 @@ generatePkgbuild (pkgDesc, hkgPkgDesc) latestPkgs = do
   where
     pkgname = archlinuxName pkgDesc
     hkgname = hackageName pkgDesc
-    pkgver = intercalate "." $ map show $ pkgVer pkgDesc
+    pkgver = packageVersionString $ pkgVer pkgDesc
     pkgrel = show . pkgRel $ pkgDesc
     pkgdesc = H.synopsis hkgPkgDesc
     pkgdepends = fetchVersionedDepends (depends pkgDesc) latestPkgs
@@ -159,7 +159,7 @@ fetchVersionedDepends deps latestPkgs
     | otherwise = "'" ++ pkgdeps ++ "'"
   where
     archlinuxNames = S.fromList $ map archlinuxName latestPkgs
-    pkgnameToPkgver = M.fromList [(archlinuxName p, archlinuxName p ++ "=" ++ intercalate "." (map show $ pkgVer p) ++ "-" ++ show (pkgRel p)) | p <- latestPkgs, archlinuxName p `S.member` archlinuxNames]
+    pkgnameToPkgver = M.fromList [(archlinuxName p, archlinuxName p ++ "=" ++ (packageVersionString $ pkgVer p) ++ "-" ++ show (pkgRel p)) | p <- latestPkgs, archlinuxName p `S.member` archlinuxNames]
     pkgdeps = intercalate "' '" $ map (\x -> fromMaybe x (M.lookup x pkgnameToPkgver)) deps
 
 buildChroots :: PkgDesc -> [PkgDesc] -> IO ()
