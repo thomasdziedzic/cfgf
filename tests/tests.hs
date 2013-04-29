@@ -3,6 +3,8 @@ import Test.HUnit
 import Package.Types
 import Package.Library
 
+import qualified Data.Map as M
+
 ghc :: String
 ghc = "ghc=7.6.3-1"
 
@@ -43,6 +45,18 @@ getPackageStringTest = TestCase $ assertEqual
     pkgver = packageVersionString $ pkgVer pkgMtl
     pkgrel = show $ pkgRel pkgMtl
 
+getPkgVerticesTest_hasDependency :: Test
+getPkgVerticesTest_hasDependency = TestCase $ assertEqual
+    "The package dependency edges should match"
+    [(1, 0)]
+    (getPkgVertices (M.fromList [("haskell-transformers", 0), ("haskell-mtl", 1)]) pkgMtl)
+
+getPkgVerticesTest_noDependency :: Test
+getPkgVerticesTest_noDependency = TestCase $ assertEqual
+    "There should be no package dependency edges"
+    []
+    (getPkgVertices (M.fromList [("haskell-transformers", 0), ("haskell-mtl", 1)]) pkgTransformers)
+
 bumpTest :: Test
 bumpTest = TestCase $ assertEqual
     "transformers should have been bumped the package version and mtl should have bumped the package release"
@@ -74,6 +88,8 @@ main = runTestTT $ TestList
     [ getDependencyStringTest_hasDependency
     , getDependencyStringTest_noDependency
     , getPackageStringTest
+    , getPkgVerticesTest_hasDependency
+    , getPkgVerticesTest_noDependency
     , bumpTest
     , bumpPackageTest_repoContainsOldVersion
     , bumpPackageTest_repoContainsSameVersion
