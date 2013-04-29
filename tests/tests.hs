@@ -43,6 +43,13 @@ getPackageStringTest = TestCase $ assertEqual
     pkgver = packageVersionString $ pkgVer pkgMtl
     pkgrel = show $ pkgRel pkgMtl
 
+
+bumpTest :: Test
+bumpTest = TestCase $ assertEqual
+    "transformers should have been bumped the package version and mtl should have bumped the package release"
+    [pkgTransformers {pkgVer=[0,4,0,1], pkgRel=1}, pkgMtl {pkgRel=4}]
+    (bump testPkgs [[0,4,0,1], [2,1,2]])
+
 bumpPackageTest_repoContainsOldVersion :: Test
 bumpPackageTest_repoContainsOldVersion = TestCase $ assertEqual
     "A package with an older should be bumped to the latest version and have a pkgrel set to 1"
@@ -68,6 +75,7 @@ main = runTestTT $ TestList
     [ getDependencyStringTest_hasDependency
     , getDependencyStringTest_noDependency
     , getPackageStringTest
+    , bumpTest
     , bumpPackageTest_repoContainsOldVersion
     , bumpPackageTest_repoContainsSameVersion
     , packageVersionStringTest
