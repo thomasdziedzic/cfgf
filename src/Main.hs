@@ -68,8 +68,6 @@ main = do
     D.createDirectory "./tmp"
     D.setCurrentDirectory "./tmp"
 
-    putStrLn $ show $ zip inorderPkgDescs inorderHkgDescs
-
     mapM_ (buildPkg latestPkgs) $ zip inorderPkgDescs inorderHkgDescs
 
     D.setCurrentDirectory ".."
