@@ -107,6 +107,8 @@ packageBuildOrderTest = TestCase $ assertEqual
     [0, 1]
     (packageBuildOrder testPkgs)
 
+-- TODO write tests for writeTemplate
+
 main :: IO Counts
 main = runTestTT $ TestList
     [ getDependencyStringTest_hasDependency

@@ -8,6 +8,7 @@ module Package.Library
     , contextFromList
     , fetchVersionedDepends
     , packageBuildOrder
+    , writeTemplate
     ) where
 
 import Package.Types
@@ -19,6 +20,10 @@ import Data.List (intercalate, find)
 import Data.Maybe (fromJust, mapMaybe,fromMaybe)
 import qualified Data.Text as T
 import qualified Data.Text.Template as TL
+import qualified Data.Text.IO as TIO
+import qualified Data.Text.Lazy.IO as LIO
+import Control.Monad ((<=<))
+import Paths_cfgf (getDataFileName)
 
 -- used to get the string we need to append to archbuild to install our dependencies
 getDependencyString :: [PkgDesc] -> PkgDesc -> String -> String
@@ -93,3 +98,10 @@ packageBuildOrder packages = G.topSort $ G.transposeG $ G.buildG bounds pkgEdges
     pkgNames = map archlinuxName packages
     pkgNameToVertex = M.fromList $ zip pkgNames [0..]
     pkgEdges = concatMap (getPkgVertices pkgNameToVertex) packages
+
+-- Untested
+writeTemplate :: FilePath -> TL.Context -> FilePath -> IO ()
+writeTemplate templatePath context targetPath = do
+    templateContent <- TIO.readFile <=< getDataFileName $ templatePath
+
+    LIO.writeFile targetPath $ TL.substitute templateContent context

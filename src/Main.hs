@@ -96,31 +96,20 @@ buildPkg latestPkgs desc@(pkgDesc, _) = do
 
 generateInstall :: PkgDesc -> IO ()
 generateInstall pkgDesc = do
-    installContent <- TIO.readFile <=< getDataFileName $ "templates/install.template"
-
-    let installTemplate = TL.template installContent
-    let filledTemplate = TL.render installTemplate ctx
-
-    LIO.writeFile filename filledTemplate
+    writeTemplate installTemplatePath ctx installPath
   where
+    installTemplatePath = "templates/install.template"
     pkgname = archlinuxName pkgDesc
-    filename = "./" ++ pkgname ++ ".install"
+    installPath = "./" ++ pkgname ++ ".install"
     ctx = contextFromList [(T.pack "pkgname", T.pack pkgname )]
 
 generatePkgbuild :: (PkgDesc, PD.PackageDescription) -> [PkgDesc] -> IO ()
 generatePkgbuild (pkgDesc, hkgPkgDesc) latestPkgs = do
-    pkgbuildContent <- TIO.readFile <=< getDataFileName $ "templates/PKGBUILD.template"
-
-    let pkgbuildTemplate = TL.template pkgbuildContent
-    let filledTemplate = TL.render pkgbuildTemplate (ctx "")
-
-    LIO.writeFile "./PKGBUILD" filledTemplate
+    writeTemplate pkgbuildTemplatePath (ctx "") pkgbuildPath
 
     (_, md5sums, _) <- readProcessWithExitCode "makepkg" ["-g"] ""
 
-    let filledTemplatePart2 = TL.render pkgbuildTemplate (ctx md5sums)
-
-    LIO.writeFile "./PKGBUILD" filledTemplatePart2
+    writeTemplate pkgbuildTemplatePath (ctx md5sums) pkgbuildPath
   where
     pkgname = archlinuxName pkgDesc
     hkgname = hackageName pkgDesc
@@ -128,6 +117,9 @@ generatePkgbuild (pkgDesc, hkgPkgDesc) latestPkgs = do
     pkgrel = show . pkgRel $ pkgDesc
     pkgdesc = H.synopsis hkgPkgDesc
     pkgdepends = fetchVersionedDepends (depends pkgDesc) latestPkgs
+
+    pkgbuildTemplatePath = "templates/PKGBUILD.template"
+    pkgbuildPath = "./PKGBUILD"
 
     ctx md5sums = contextFromList [
           (T.pack "pkgname", T.pack pkgname)
