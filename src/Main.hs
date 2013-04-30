@@ -13,13 +13,7 @@ import qualified Data.Map as M
 import qualified System.Directory as D
 import qualified Distribution.PackageDescription as PD
 import qualified Data.Text as T
-import qualified Data.Text.IO as TIO
-import qualified Data.Text.Template as TL
-import qualified Data.Text.Lazy.IO as LIO
 import System.Process (readProcessWithExitCode)
-import Control.Monad ((<=<))
-
-import Paths_cfgf (getDataFileName)
 
 -- leave out cabal-install for now since it is a statically linked binary which doesn't depend on haskell libs or a specific ghc version, also doesn't need an install file
 -- PkgDesc "cabal-install" "cabal-install" [1,16,0,2] 2
