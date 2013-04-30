@@ -109,6 +109,8 @@ packageBuildOrderTest = TestCase $ assertEqual
 
 -- TODO write tests for writeTemplate
 
+-- TODO write tests for updateHackageDatabase
+
 main :: IO Counts
 main = runTestTT $ TestList
     [ getDependencyStringTest_hasDependency
