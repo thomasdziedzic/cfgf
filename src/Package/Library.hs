@@ -9,6 +9,7 @@ module Package.Library
     , fetchVersionedDepends
     , packageBuildOrder
     , writeTemplate
+    , updateHackageDatabase
     ) where
 
 import Package.Types
@@ -24,6 +25,8 @@ import qualified Data.Text.IO as TIO
 import qualified Data.Text.Lazy.IO as LIO
 import Control.Monad ((<=<))
 import Paths_cfgf (getDataFileName)
+import System.Exit (exitFailure, ExitCode (..))
+import System.Cmd (rawSystem)
 
 -- used to get the string we need to append to archbuild to install our dependencies
 getDependencyString :: [PkgDesc] -> PkgDesc -> String -> String
@@ -105,3 +108,11 @@ writeTemplate templatePath context targetPath = do
     templateContent <- TIO.readFile <=< getDataFileName $ templatePath
 
     LIO.writeFile targetPath $ TL.substitute templateContent context
+
+-- Untested
+updateHackageDatabase :: IO ()
+updateHackageDatabase = do
+    cabalExitCode <- rawSystem "cabal" ["update"]
+    if cabalExitCode == ExitSuccess
+        then putStrLn "update succeeded"
+        else putStrLn "update failed" >> exitFailure

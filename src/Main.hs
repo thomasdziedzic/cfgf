@@ -38,11 +38,7 @@ archs = ["i686", "x86_64"]
 
 main :: IO ()
 main = do
-    -- update the hackage database
-    cabalExitCode <- rawSystem "cabal" ["update"]
-    if cabalExitCode == ExitSuccess
-        then putStrLn "update succeeded"
-        else putStrLn "update failed" >> exitFailure
+    updateHackageDatabase
 
     -- find the latest version of each package
     hackage <- H.readHackage
