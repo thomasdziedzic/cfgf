@@ -7,3 +7,6 @@ main
 tests
 tmp
 .lock
+
+.cabal-sandbox
+cabal.sandbox.config
