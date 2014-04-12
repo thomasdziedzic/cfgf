@@ -17,17 +17,17 @@ import System.Process (readProcessWithExitCode, rawSystem, system)
 -- leave out cabal-install for now since it is a statically linked binary which doesn't depend on haskell libs or a specific ghc version, also doesn't need an install file
 -- PkgDesc "cabal-install" "cabal-install" [1,16,0,2] 2
 pkgs :: [PkgDesc]
-pkgs = [ PkgDesc "haskell-http" "HTTP" [4000,2,8] 1 [ghc, "sh", "haskell-network", "haskell-parsec", "haskell-mtl"]
-       , PkgDesc "haskell-mtl" "mtl" [2,1,2] 3 [ghc, "sh", "haskell-transformers"]
-       , PkgDesc "haskell-network" "network" [2,4,1,2] 1 [ghc, "sh", "haskell-parsec"]
-       , PkgDesc "haskell-parsec" "parsec" [3,1,3] 3 [ghc, "sh", "haskell-mtl", "haskell-text"]
-       , PkgDesc "haskell-random" "random" [1,0,1,1] 5 [ghc, "sh"]
-       , PkgDesc "haskell-text" "text" [0,11,2,3] 3 [ghc, "sh"]
-       , PkgDesc "haskell-transformers" "transformers" [0,3,0,0] 4 [ghc, "sh"]
-       , PkgDesc "haskell-zlib" "zlib" [0,5,4,1] 1 [ghc, "sh", "zlib"]
+pkgs = [ PkgDesc "haskell-http" "HTTP" [4000,2,12] 1 [ghc, "sh", "haskell-network", "haskell-parsec", "haskell-mtl"]
+       , PkgDesc "haskell-mtl" "mtl" [2,1,3,1] 1 [ghc, "sh", "haskell-transformers"]
+       , PkgDesc "haskell-network" "network" [2,4,2,2] 1 [ghc, "sh", "haskell-parsec"]
+       , PkgDesc "haskell-parsec" "parsec" [3,1,5] 1 [ghc, "sh", "haskell-mtl", "haskell-text"]
+       , PkgDesc "haskell-random" "random" [1,0,1,1] 6 [ghc, "sh"]
+       , PkgDesc "haskell-text" "text" [1,1,0,1] 1 [ghc, "sh"]
+       , PkgDesc "haskell-transformers" "transformers" [0,3,0,0] 5 [ghc, "sh"]
+       , PkgDesc "haskell-zlib" "zlib" [0,5,4,1] 2 [ghc, "sh", "zlib"]
        ]
   where
-    ghc = "ghc=7.6.3-1"
+    ghc = "ghc=7.8.2-1"
 
 repo :: String
 repo = "staging"
