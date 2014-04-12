@@ -26,7 +26,7 @@ import qualified Data.Text.Lazy.IO as LIO
 import Control.Monad ((<=<))
 import Paths_cfgf (getDataFileName)
 import System.Exit (exitFailure, ExitCode (..))
-import System.Cmd (rawSystem)
+import System.Process (rawSystem)
 
 -- used to get the string we need to append to archbuild to install our dependencies
 getDependencyString :: [PkgDesc] -> PkgDesc -> String -> String

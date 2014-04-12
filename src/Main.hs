@@ -7,13 +7,12 @@ import Package.Types
 import Package.Library
 
 import System.Exit
-import System.Cmd
 import qualified Distribution.Hackage.DB as H
 import qualified Data.Map as M
 import qualified System.Directory as D
 import qualified Distribution.PackageDescription as PD
 import qualified Data.Text as T
-import System.Process (readProcessWithExitCode)
+import System.Process (readProcessWithExitCode, rawSystem, system)
 
 -- leave out cabal-install for now since it is a statically linked binary which doesn't depend on haskell libs or a specific ghc version, also doesn't need an install file
 -- PkgDesc "cabal-install" "cabal-install" [1,16,0,2] 2
